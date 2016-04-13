@@ -190,17 +190,21 @@ public class RuleCheckWorker : MonoBehaviour
 
     private void AttackCardOnRow(List<CharacterCard> targetList, int attackRow)
     {
-        for (int i = 0; i < targetList.Count; ++i)
+        if(m_CurrentTurnCard.CurrentCardStatus == CharacterCard.CardStatus.Idle)
         {
-            CharacterCard cardObject = targetList[i];
-            if (cardObject.RowNumber == attackRow)
+            for (int i = 0; i < targetList.Count; ++i)
             {
-                if(cardObject.isActiveAndEnabled && m_CurrentTurnCard.isActiveAndEnabled)
+                CharacterCard cardObject = targetList[i];
+                if (cardObject.RowNumber == attackRow)
                 {
-                    if (cardObject.CurrentHealthPoint > 0)
+                    if (cardObject.isActiveAndEnabled && m_CurrentTurnCard.isActiveAndEnabled)
                     {
-                        m_CurrentTurnCard.AttackCard(cardObject);
-                        break;
+                        if (cardObject.CurrentHealthPoint > 0)
+                        {
+                            m_CurrentTurnCard.AttackCard(cardObject);
+                            Debug.Log("Attacked Row = " + attackRow);
+                            break;
+                        }
                     }
                 }
             }
@@ -211,33 +215,42 @@ public class RuleCheckWorker : MonoBehaviour
     {
         AdjustExecuteOrder();
 
-        if (m_CurrentCardIndex < m_TurnExecuteOrder.Count - 1)
+        if(m_CurrentTurnCard.IsActionEnded)
         {
-            m_CurrentTurnCard = m_TurnExecuteOrder[++m_CurrentCardIndex];
-        }
-        else
-        {
-            m_CurrentTurnCard = m_TurnExecuteOrder[0];
-            m_CurrentCardIndex = 0;
-            ++m_GamePhase;
+            if (m_CurrentCardIndex < m_TurnExecuteOrder.Count - 1)
+            {
+                m_CurrentTurnCard = m_TurnExecuteOrder[++m_CurrentCardIndex];
+            }
+            else
+            {
+                m_CurrentTurnCard = m_TurnExecuteOrder[0];
+                m_CurrentCardIndex = 0;
+                ++m_GamePhase;
+
+                Debug.Log("GamePhase = " + m_GamePhase);
+            }
+
+            m_CurrentTurnCard.IsActionEnded = false;
         }
     }
 
     private void AdjustExecuteOrder()
     {
-        List<int> removeList = new List<int>();
+        List<CharacterCard> removeList = new List<CharacterCard>();
         for(int i = 0; i < m_TurnExecuteOrder.Count; ++i)
         {
             if(m_TurnExecuteOrder[i].CurrentHealthPoint <= 0)
             {
-                removeList.Add(i);
+                removeList.Add(m_TurnExecuteOrder[i]);
             }
         }
 
         for(int i = 0; i < removeList.Count; ++i)
         {
-            m_TurnExecuteOrder.RemoveAt(removeList[i] - i);
+            m_TurnExecuteOrder.Remove(removeList[i]);
         }
+
+        m_CurrentCardIndex = m_TurnExecuteOrder.IndexOf(m_CurrentTurnCard);
 
         removeList = null;
     }

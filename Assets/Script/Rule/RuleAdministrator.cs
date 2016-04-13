@@ -33,7 +33,6 @@ public class RuleAdministrator : MonoBehaviour
     private CardStatusCheckWorker m_CardStatusCheckWorker = null;
     private CardMovementWorker m_CardMovementWorker = null;
     private RuleCheckWorker m_RuleCheckWorker = null;
-    private CardVisualizeWorker m_CardVisualizeWorker = null;
     private SkillCardWorker m_SkillCardWorker = null;
 
     private bool isGameFinished = false;
@@ -46,7 +45,6 @@ public class RuleAdministrator : MonoBehaviour
         m_CardStatusCheckWorker = gameObject.AddComponent<CardStatusCheckWorker>();
         m_CardMovementWorker = gameObject.AddComponent<CardMovementWorker>();
         m_RuleCheckWorker = gameObject.AddComponent<RuleCheckWorker>();
-        m_CardVisualizeWorker = gameObject.AddComponent<CardVisualizeWorker>();
         m_SkillCardWorker = gameObject.AddComponent<SkillCardWorker>();
 
         initCards();
@@ -63,16 +61,15 @@ public class RuleAdministrator : MonoBehaviour
         if(!isGameFinished)
         {
             StartCoroutine(m_CardMovementWorker.Run());
-            StartCoroutine(m_CardVisualizeWorker.Run());
             StartCoroutine(m_SkillCardWorker.Run());
         }
     }
 
     void OnDestroy()
     {
+        m_CardStatusCheckWorker = null;
         m_CardMovementWorker = null;
         m_RuleCheckWorker = null;
-        m_CardVisualizeWorker = null;
         m_SkillCardWorker = null;
     }
 
@@ -102,6 +99,7 @@ public class RuleAdministrator : MonoBehaviour
             inGameCardObject.m_AttackPoint = settingCardPrefab.m_AttackPoint;
             inGameCardObject.m_Speed = settingCardPrefab.m_Speed;
             inGameCardObject.m_AttackRange = settingCardPrefab.m_AttackRange;
+            inGameCardObject.ResetStatus();
 
             StartCoroutine(inGameCardObject.UpdateCardStatus());
 

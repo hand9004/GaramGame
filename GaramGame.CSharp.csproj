@@ -65,19 +65,23 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Script\ConstantDefine.cs" />
-    <Compile Include="Assets\Script\Object\CharacterCard.cs" />
+    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardAttackEffect.cs" />
+    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardHitEffect.cs" />
+    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardVisualizeEffect.cs" />
+    <Compile Include="Assets\Script\Utilities\ConstantDefine.cs" />
+    <Compile Include="Assets\Script\Utilities\CustomUtility.cs" />
+    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCard.cs" />
+    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardVisualizer.cs" />
     <Compile Include="Assets\Script\Object\ObjectPoolManager.cs" />
     <Compile Include="Assets\Script\Rule\CardMovementWorker.cs" />
     <Compile Include="Assets\Script\Rule\CardStatusCheckWorker.cs" />
-    <Compile Include="Assets\Script\Rule\CardVisualizeWorker.cs" />
     <Compile Include="Assets\Script\Rule\RuleAdministrator.cs" />
     <Compile Include="Assets\Script\Rule\RuleCheckWorker.cs" />
     <Compile Include="Assets\Script\Rule\SkillCardWorker.cs" />
-    <Compile Include="Assets\Script\CustomUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Resources\Wood texture floor_01\readme.txt" />
   </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
