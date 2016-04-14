@@ -31,7 +31,7 @@ public class RuleAdministrator : MonoBehaviour
     private List<CharacterCard> m_EnemyCardCharacterList = new List<CharacterCard>();
 
     private CardStatusCheckWorker m_CardStatusCheckWorker = null;
-    private CardMovementWorker m_CardMovementWorker = null;
+    private CardSlotWorker m_CardSlotWorker = null;
     private RuleCheckWorker m_RuleCheckWorker = null;
     private SkillCardWorker m_SkillCardWorker = null;
 
@@ -43,7 +43,7 @@ public class RuleAdministrator : MonoBehaviour
         Debug.Assert(m_EnemySideCardSettingList.Count <= ConstantDefine.MAX_CARD_DECK_COUNT, "List Size Should be Under 6.");
 
         m_CardStatusCheckWorker = gameObject.AddComponent<CardStatusCheckWorker>();
-        m_CardMovementWorker = gameObject.AddComponent<CardMovementWorker>();
+        m_CardSlotWorker = gameObject.AddComponent<CardSlotWorker>();
         m_RuleCheckWorker = gameObject.AddComponent<RuleCheckWorker>();
         m_SkillCardWorker = gameObject.AddComponent<SkillCardWorker>();
 
@@ -51,24 +51,21 @@ public class RuleAdministrator : MonoBehaviour
 
         InitCardMovementWorker();
         InitRuleCheckWorker();
+        InitCardStatusCheckWorker();
     }
 
     void Update()
     {
         StartCoroutine(m_RuleCheckWorker.Run());
+        StartCoroutine(m_CardSlotWorker.Run());
+        StartCoroutine(m_SkillCardWorker.Run());
         StartCoroutine(m_CardStatusCheckWorker.Run());
-
-        if(!isGameFinished)
-        {
-            StartCoroutine(m_CardMovementWorker.Run());
-            StartCoroutine(m_SkillCardWorker.Run());
-        }
     }
 
     void OnDestroy()
     {
         m_CardStatusCheckWorker = null;
-        m_CardMovementWorker = null;
+        m_CardSlotWorker = null;
         m_RuleCheckWorker = null;
         m_SkillCardWorker = null;
     }
@@ -94,7 +91,7 @@ public class RuleAdministrator : MonoBehaviour
             inGamePortraitSpr.sprite = settingPortraitSpr.sprite;
 
             inGameCardObject.IsPlayerTeam = isPlayerTeam;
-            inGameCardObject.RowNumber = m_PlayerSideCardSettingList[i].RowNumber;
+            inGameCardObject.RowNumber = settingDataList[i].RowNumber;
             inGameCardObject.m_HealthPoint = settingCardPrefab.m_HealthPoint;
             inGameCardObject.m_AttackPoint = settingCardPrefab.m_AttackPoint;
             inGameCardObject.m_Speed = settingCardPrefab.m_Speed;
@@ -121,14 +118,14 @@ public class RuleAdministrator : MonoBehaviour
             m_SecondEnemyCharacterRowMidPosition.transform.position,
             m_ThirdEnemyCharacterRowMidPosition.transform.position };
 
-        m_CardMovementWorker.PlayerCardPosition = playerCardPos;
-        m_CardMovementWorker.EnemyCardPosition = EnemyCardPos;
-        m_CardMovementWorker.EnemyCharacterPosition = EnemyCharacterPos;
+        m_CardSlotWorker.PlayerCardPosition = playerCardPos;
+        m_CardSlotWorker.EnemyCardPosition = EnemyCardPos;
+        m_CardSlotWorker.EnemyCharacterPosition = EnemyCharacterPos;
 
-        m_CardMovementWorker.InitCardPositionSlots();
+        m_CardSlotWorker.InitCardPositionSlots();
 
-        m_CardMovementWorker.AttachPlayerCardToSlot(ref m_PlayerCardCharacterList);
-        m_CardMovementWorker.AttachEnemyCardToSlot(ref m_EnemyCardCharacterList);
+        m_CardSlotWorker.AttachPlayerCardToSlot(ref m_PlayerCardCharacterList);
+        m_CardSlotWorker.AttachEnemyCardToSlot(ref m_EnemyCardCharacterList);
     }
 
     private void InitRuleCheckWorker()
@@ -149,5 +146,36 @@ public class RuleAdministrator : MonoBehaviour
                     }
                 }
             });
+        m_RuleCheckWorker.RegisterOccuredActionListener(
+            (RuleCheckWorker.OccuredActionState ActionEvent) =>
+            {
+                switch (ActionEvent)
+                {
+                    case RuleCheckWorker.OccuredActionState.Attack:
+                        {
+                        }
+                        break;
+                    case RuleCheckWorker.OccuredActionState.CardSpecialSkill:
+                        {
+                        }
+                        break;
+                    case RuleCheckWorker.OccuredActionState.SkillCard:
+                        {
+                        }
+                        break;
+                    default:
+                        { }
+                        break;
+                }
+            });
+    }
+
+    private void InitCardStatusCheckWorker()
+    {
+        m_CardStatusCheckWorker.InitCardStatusCheckWorker(ref m_PlayerCardCharacterList, ref m_EnemyCardCharacterList);
+        m_CardStatusCheckWorker.RegisterDiedCardObjectListener(() =>
+        {
+            m_CardSlotWorker.ReArrangeCardSlot();
+        });
     }
 }
