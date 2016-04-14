@@ -135,6 +135,11 @@ public class CharacterCard : MonoBehaviour {
         yield return null;
     }
 
+    public void OnCardDoNoting()
+    {
+        m_CardStatus = CardStatus.TurnActionEnded;
+    }
+
     public void OnCardAttacking()
     {
         m_CharacterCardVisualizer.OnCardAttacking();

@@ -18,11 +18,9 @@ public class CardSlotWorker : MonoBehaviour
 
     private List<CharacterCard> m_PlayerCardList = null;
     private List<CharacterCard> m_EnemyCardList = null;
-    private List<CharacterCard> m_EnemyCharacterList = null;
 
     private List<CardSlot> m_PlayerCardSlotList = new List<CardSlot>();
     private List<CardSlot> m_EnemyCardSlotList = new List<CardSlot>();
-    private List<CardSlot> m_EnemyCharacterSlotList = new List<CardSlot>();
 
     public Vector3[] PlayerCardPosition
     {
@@ -41,7 +39,6 @@ public class CardSlotWorker : MonoBehaviour
     {
         InitCardSlotsInList(m_PlayerCardSlotList, m_PlayerCardStandardPosition, false);
         InitCardSlotsInList(m_EnemyCardSlotList, m_EnemyCardStandardPosition, false);
-        InitCardSlotsInList(m_EnemyCharacterSlotList, m_EnemyCharacterStandardPosition, true);
     }
 
     public void AttachPlayerCardToSlot(ref List<CharacterCard> targetCardList)
@@ -56,17 +53,26 @@ public class CardSlotWorker : MonoBehaviour
         m_EnemyCardList = targetCardList;
     }
 
-    public void AttachEnemyCharacterToSlot(ref List<CharacterCard> targetCardList)
+    public int GetAttackableRowCountInRange(bool targetIsPlayerTeam, int realRange)
     {
-        SyncCardWithSlot(ref targetCardList, ref m_EnemyCharacterSlotList);
-        m_EnemyCharacterList = targetCardList;
+        int retAttackableRowCount = 0;
+
+        if(targetIsPlayerTeam)
+        {
+            retAttackableRowCount = GetAttackableRowCountOperation(ref m_PlayerCardSlotList, realRange);
+        }
+        else
+        {
+            retAttackableRowCount = GetAttackableRowCountOperation(ref m_EnemyCardSlotList, realRange);
+        }
+
+        return retAttackableRowCount;
     }
 
     public void ReArrangeCardSlot()
     {
         ReArrangeOperation(ref m_PlayerCardSlotList);
         ReArrangeOperation(ref m_EnemyCardSlotList);
-//        ReArrangeOperation(ref m_EnemyCharacterSlotList);
     }
 
     public IEnumerator Run()
@@ -171,11 +177,38 @@ public class CardSlotWorker : MonoBehaviour
                         nextTargetSlot.SlotObject.RowNumber = rowOfSlot;
                     }
 
-                    // Todo : Add MovingAnimation To Destination Slot.
-                    nextTargetSlot.SlotObject.transform.position = targetSlot.SlotPosition;
                     UtilityFunctions.Swap(ref targetSlot.SlotObject, ref nextTargetSlot.SlotObject);
                 }
             }
         }
+    }
+
+    private int GetAttackableRowCountOperation(ref List<CardSlot> targetList, int realRange)
+    {
+        int retAttackableRowCount = 0;
+        int prevRowIndex = 0;
+
+        for (int i = 0; i < targetList.Count; ++i)
+        {
+            int rowIndex = (i / 2) + 1;
+            CardSlot playerSlot = targetList[i];
+            if (playerSlot.SlotObject != null)
+            {
+                if (playerSlot.SlotObject.RowNumber <= realRange)
+                {
+                    if (prevRowIndex != rowIndex)
+                    {
+                        prevRowIndex = rowIndex;
+                        ++retAttackableRowCount;
+                    }
+                }
+            }
+            else
+            {
+                break;
+            }
+        }
+
+        return retAttackableRowCount;
     }
 }
