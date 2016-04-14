@@ -6,6 +6,7 @@ public class ObjectPoolManager : MonoBehaviour {
     public GameObject ObjectType = null;
     public int InitialObjectCount = 0;
 
+    private int m_ObjectIndex = 0;
     private List<GameObject> m_PooledObjectList = new List<GameObject>();
     private List<GameObject> m_UsedObjectList = new List<GameObject>();
 
@@ -35,7 +36,7 @@ public class ObjectPoolManager : MonoBehaviour {
             retObject = Instantiate(ObjectType);
             m_UsedObjectList.Add(retObject);
         }
-        retObject.name = "ActiveObject";
+        retObject.name = "ActiveObject" + m_ObjectIndex++;
         retObject.SetActive(true);
 
         return retObject;
@@ -46,7 +47,7 @@ public class ObjectPoolManager : MonoBehaviour {
         m_UsedObjectList.Remove(targetObject);
         m_PooledObjectList.Add(targetObject);
 
-        targetObject.name = "PooledObject";
+        targetObject.name = "PooledObject" + m_ObjectIndex--;
         targetObject.SetActive(false);
     }
 

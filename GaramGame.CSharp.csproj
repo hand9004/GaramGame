@@ -13,13 +13,11 @@
     <TargetFrameworkIdentifier>.NETFramework</TargetFrameworkIdentifier>
     <TargetFrameworkVersion>v3.5</TargetFrameworkVersion>
     <TargetFrameworkProfile>Unity Subset v3.5</TargetFrameworkProfile>
-    <CompilerResponseFile>
-    </CompilerResponseFile>
+    <CompilerResponseFile></CompilerResponseFile>
     <UnityProjectType>Game:1</UnityProjectType>
     <UnityBuildTarget>StandaloneWindows:5</UnityBuildTarget>
     <UnityVersion>5.3.4f1</UnityVersion>
-    <RootNamespace>
-    </RootNamespace>
+    <RootNamespace></RootNamespace>
     <LangVersion Condition=" '$(VisualStudioVersion)' != '10.0' ">4</LangVersion>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
@@ -65,23 +63,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCard.cs" />
     <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardAttackEffect.cs" />
     <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardHitEffect.cs" />
     <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardVisualizeEffect.cs" />
-    <Compile Include="Assets\Script\Utilities\ConstantDefine.cs" />
-    <Compile Include="Assets\Script\Utilities\CustomUtility.cs" />
-    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCard.cs" />
     <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardVisualizer.cs" />
     <Compile Include="Assets\Script\Object\ObjectPoolManager.cs" />
-    <Compile Include="Assets\Script\Rule\CardMovementWorker.cs" />
+    <Compile Include="Assets\Script\Rule\CardSlotWorker.cs" />
     <Compile Include="Assets\Script\Rule\CardStatusCheckWorker.cs" />
     <Compile Include="Assets\Script\Rule\RuleAdministrator.cs" />
     <Compile Include="Assets\Script\Rule\RuleCheckWorker.cs" />
     <Compile Include="Assets\Script\Rule\SkillCardWorker.cs" />
+    <Compile Include="Assets\Script\Utilities\ConstantDefine.cs" />
+    <Compile Include="Assets\Script\Utilities\CustomUtility.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\Resources\Wood texture floor_01\readme.txt" />
   </ItemGroup>
-  <ItemGroup />
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
