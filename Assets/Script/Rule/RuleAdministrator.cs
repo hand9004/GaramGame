@@ -47,7 +47,7 @@ public class RuleAdministrator : MonoBehaviour
         m_RuleCheckWorker = gameObject.AddComponent<RuleCheckWorker>();
         m_SkillCardWorker = gameObject.AddComponent<SkillCardWorker>();
 
-        initCards();
+        InitCards();
 
         InitCardMovementWorker();
         InitRuleCheckWorker();
@@ -70,13 +70,13 @@ public class RuleAdministrator : MonoBehaviour
         m_SkillCardWorker = null;
     }
 
-    private void initCards()
+    private void InitCards()
     {
-        initCard(m_PlayerSideCardSettingList, m_PlayerCardCharacterList, true);
-        initCard(m_EnemySideCardSettingList, m_EnemyCardCharacterList, false);
+        InitCard(ref m_PlayerSideCardSettingList, ref m_PlayerCardCharacterList, true);
+        InitCard(ref m_EnemySideCardSettingList, ref m_EnemyCardCharacterList, false);
     }
 
-    private void initCard(List<CardDeckSettingData> settingDataList, List<CharacterCard> inGameDataList, bool isPlayerTeam)
+    private void InitCard(ref List<CardDeckSettingData> settingDataList, ref List<CharacterCard> inGameDataList, bool isPlayerTeam)
     {
         ObjectPoolManager objectPoolMgr = GameObject.Find("CharacterCardPool").GetComponent<ObjectPoolManager>();
 
@@ -131,6 +131,10 @@ public class RuleAdministrator : MonoBehaviour
     private void InitRuleCheckWorker()
     {
         m_RuleCheckWorker.InitRuleCheckWorker(ref m_PlayerCardCharacterList, ref m_EnemyCardCharacterList);
+        m_RuleCheckWorker.RegisterAttackableRowCountConnector((bool targetIsPlayerTeam, int realAttackRange) =>
+        {
+            return m_CardSlotWorker.GetAttackableRowCountInRange(targetIsPlayerTeam, realAttackRange);
+        });
         m_RuleCheckWorker.RegisterGameWinListener(
             (RuleCheckWorker.GameRuleState GameState, bool IsPlayerWin) =>
             {

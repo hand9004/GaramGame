@@ -9,6 +9,10 @@ using System;
 //
 public class RuleCheckWorker : MonoBehaviour
 {
+    // Connector의 경우, 어떤 모듈과 어떤 모듈이 연결되서 사용되는 delegate 변수에 붙이는 접미사
+    // Listener의 경우, 어떤 클래스가 특정 모듈로부터 어떤 상황에 따른 이벤트를 얻기만 할 경우 붙이는 접미사
+    public delegate int AttackableRowCountConnector(bool targetIsPlayerTeam, int realRange);
+
     public delegate void OccuredActionListener(OccuredActionState ActionEvent);
     public delegate void GameWinListener(GameRuleState GameState, bool IsPlayerWin);
 
@@ -33,6 +37,8 @@ public class RuleCheckWorker : MonoBehaviour
     private int m_GamePhase = 1;
 
     private CharacterCard m_CurrentTurnCard = null;
+
+    private AttackableRowCountConnector m_AttackableConnector = null;
     private GameWinListener m_GameWinListener = null;
     private OccuredActionListener m_ActionListener = null;
 
@@ -83,6 +89,11 @@ public class RuleCheckWorker : MonoBehaviour
         m_CurrentGameState = GameRuleState.GamePlaying;
     }
 
+    public void RegisterAttackableRowCountConnector(AttackableRowCountConnector attackableConnector)
+    {
+        m_AttackableConnector = attackableConnector;
+    }
+
     public void RegisterGameWinListener(GameWinListener gameListener)
     {
         m_GameWinListener = gameListener;
@@ -130,20 +141,30 @@ public class RuleCheckWorker : MonoBehaviour
         // 기존의 자신과 팀을 제외하고 공격할 수 있는 적군의 행을 계산한다.
         int realAttackRange = -(m_CurrentTurnCard.RowNumber) + (m_CurrentTurnCard.m_AttackRange + 1);
         realAttackRange = (realAttackRange > ConstantDefine.THIRD_ROW) ? ConstantDefine.THIRD_ROW : realAttackRange;
+
+        int attackableCount = m_AttackableConnector(!m_CurrentTurnCard.IsPlayerTeam, realAttackRange);
+        int selectedRow = GetAttackConfirmedRow(attackableCount);
+
         if (m_CurrentTurnCard.IsPlayerTeam)
         {
-            int selectedRow = GetAttackConfirmedRow(realAttackRange);
-            if(selectedRow > 0)
+            if (selectedRow > 0)
             {
                 AttackCardOnRow(m_EnemyCardList, selectedRow);
+            }
+            else
+            {
+                m_CurrentTurnCard.OnCardDoNoting();
             }
         }
         else
         {
-            int selectedRow = GetAttackConfirmedRow(realAttackRange);
             if (selectedRow > 0)
             {
                 AttackCardOnRow(m_PlayerCardList, selectedRow);
+            }
+            else
+            {
+                m_CurrentTurnCard.OnCardDoNoting();
             }
         }
 
@@ -151,13 +172,12 @@ public class RuleCheckWorker : MonoBehaviour
     }
 
     // 사정거리 내에 있을 경우, 공격할 행을 알려준다.
-    private int GetAttackConfirmedRow(int realAttackRange)
+    private int GetAttackConfirmedRow(int attackableCount)
     {
-        // Todo : Object Check In Row(with Slot).
         int retRow = 0;
-        if (realAttackRange > ConstantDefine.FIRST_ROW)
+        if (attackableCount > ConstantDefine.FIRST_ROW)
         {
-            switch (realAttackRange)
+            switch (attackableCount)
             {
                 case ConstantDefine.SECOND_ROW:
                     {
@@ -199,7 +219,7 @@ public class RuleCheckWorker : MonoBehaviour
                     break;
             }
         }
-        else if (realAttackRange == ConstantDefine.FIRST_ROW)
+        else if (attackableCount == ConstantDefine.FIRST_ROW)
         {
             retRow = ConstantDefine.FIRST_ROW;
         }

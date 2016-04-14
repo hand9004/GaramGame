@@ -19,7 +19,7 @@ namespace CustomUtility
             rhs = temp;
         }
 
-        // 배열에 넣은 확률에 따라 어느 영역이 랜덤에 의해 선택됬는지 알려준다.
+        // 배열에 넣은 확률 분배에 따라 어느 영역이 랜덤에 의해 선택됬는지 알려준다.
         public static int GetWhereIsCorrect(int min, int max, float[] percentageDistributeArr)
         {
             // 배열 무결성 검사
@@ -36,13 +36,30 @@ namespace CustomUtility
 
             if (percentageDistributeArr.Length <= 2)
             {
-                if (selectedArea <= min + (randomValueLength * percentageDistributeArr[0]))
+                switch(percentageDistributeArr.Length)
                 {
-                    selectedArea = 0;
-                }
-                else
-                {
-                    selectedArea = 1;
+                    case 1:
+                        {
+                            selectedArea = 0;
+                        }
+                        break;
+                    case 2:
+                        {
+                            if (selectedArea <= min + (randomValueLength * percentageDistributeArr[0]))
+                            {
+                                selectedArea = 0;
+                            }
+                            else
+                            {
+                                selectedArea = 1;
+                            }
+                        }
+                        break;
+                    default:
+                        {
+                            Debug.Assert(false);
+                        }
+                        break;
                 }
             }
             else
