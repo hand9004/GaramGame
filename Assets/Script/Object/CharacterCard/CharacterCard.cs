@@ -6,6 +6,7 @@ public class CharacterCard : MonoBehaviour {
     {
         Idle,
         InAction,
+        TurnActionEnded,
     }
 
     public int m_AttackRange = 0;
@@ -20,7 +21,6 @@ public class CharacterCard : MonoBehaviour {
     public TextMesh m_SpeedText = null;
 
     private bool m_IsPlayerTeam = false;
-    private bool m_IsActionEnded = false;
     private int m_PlacedRowNumber = 0;
     private CardVisualizer m_CharacterCardVisualizer = null;
     private CharacterCard m_TargetCard = null;
@@ -30,12 +30,6 @@ public class CharacterCard : MonoBehaviour {
     {
         get { return m_IsPlayerTeam; }
         set { m_IsPlayerTeam = value; }
-    }
-
-    public bool IsActionEnded
-    {
-        get { return m_IsActionEnded; }
-        set { m_IsActionEnded = value; }
     }
 
     public int RowNumber
@@ -116,8 +110,7 @@ public class CharacterCard : MonoBehaviour {
 
         m_CharacterCardVisualizer.RegisterOnActionEnded(() =>
         {
-            m_IsActionEnded = true;
-            m_CardStatus = CardStatus.Idle;
+            m_CardStatus = CardStatus.TurnActionEnded;
         });
     }
 
@@ -157,5 +150,11 @@ public class CharacterCard : MonoBehaviour {
     public void ResetStatus()
     {
         m_CurrentHealthPoint = m_HealthPoint;
+
+    }
+
+    public void PhaseEndAction()
+    {
+        m_CardStatus = CardStatus.Idle;
     }
 }
