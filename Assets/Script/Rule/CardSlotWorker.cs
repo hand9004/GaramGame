@@ -1,9 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using CustomUtility;
 using Constants;
 
-public class CardMovementWorker : MonoBehaviour
+public class CardSlotWorker : MonoBehaviour
 {
     private class CardSlot
     {
@@ -14,6 +15,10 @@ public class CardMovementWorker : MonoBehaviour
     private Vector3[] m_PlayerCardStandardPosition = null;
     private Vector3[] m_EnemyCardStandardPosition = null;
     private Vector3[] m_EnemyCharacterStandardPosition = null;
+
+    private List<CharacterCard> m_PlayerCardList = null;
+    private List<CharacterCard> m_EnemyCardList = null;
+    private List<CharacterCard> m_EnemyCharacterList = null;
 
     private List<CardSlot> m_PlayerCardSlotList = new List<CardSlot>();
     private List<CardSlot> m_EnemyCardSlotList = new List<CardSlot>();
@@ -41,30 +46,33 @@ public class CardMovementWorker : MonoBehaviour
 
     public void AttachPlayerCardToSlot(ref List<CharacterCard> targetCardList)
     {
-        Debug.Assert(targetCardList.Count == m_PlayerCardSlotList.Count, "Slot and Object Count Should be Equal.");
         SyncCardWithSlot(ref targetCardList, ref m_PlayerCardSlotList);
+        m_PlayerCardList = targetCardList;
     }
 
     public void AttachEnemyCardToSlot(ref List<CharacterCard> targetCardList)
     {
-        Debug.Assert(targetCardList.Count == m_EnemyCardSlotList.Count, "Slot and Object Count Should be Equal.");
         SyncCardWithSlot(ref targetCardList, ref m_EnemyCardSlotList);
+        m_EnemyCardList = targetCardList;
     }
 
     public void AttachEnemyCharacterToSlot(ref List<CharacterCard> targetCardList)
     {
-        Debug.Assert(targetCardList.Count == m_EnemyCharacterSlotList.Count, "Slot and Object Count Should be Equal.");
         SyncCardWithSlot(ref targetCardList, ref m_EnemyCharacterSlotList);
+        m_EnemyCharacterList = targetCardList;
+    }
+
+    public void ReArrangeCardSlot()
+    {
+        ReArrangeOperation(ref m_PlayerCardSlotList);
+        ReArrangeOperation(ref m_EnemyCardSlotList);
+//        ReArrangeOperation(ref m_EnemyCharacterSlotList);
     }
 
     public IEnumerator Run()
     {
-        ObjectPoolManager poolMgr = GameObject.Find("CharacterCardPool").GetComponent<ObjectPoolManager>();
-
-        CheckAndRemoveDeadSlot(ref m_PlayerCardSlotList, ref poolMgr);
-        CheckAndRemoveDeadSlot(ref m_EnemyCardSlotList, ref poolMgr);
-
-
+        CheckAndEmptySlot(ref m_PlayerCardSlotList);
+        CheckAndEmptySlot(ref m_EnemyCardSlotList);
 
         yield return null;
     }
@@ -102,13 +110,35 @@ public class CardMovementWorker : MonoBehaviour
         for (int i = 0; i < targetCardList.Count; ++i)
         {
             CharacterCard targetCardObject = targetCardList[i];
-
-            targetCardObject.transform.position = cardSlotList[i].SlotPosition;
-            cardSlotList[i].SlotObject = targetCardObject;
+            for(int j = 0; j < cardSlotList.Count; ++j)
+            {
+                int rowOfSlot = (j / 2) + 1;
+                CardSlot cardSlotObject = cardSlotList[j];
+                if(cardSlotObject.SlotObject == null)
+                {
+                    if (targetCardObject.RowNumber == rowOfSlot)
+                    {
+                        targetCardObject.transform.position = cardSlotObject.SlotPosition;
+                        cardSlotObject.SlotObject = targetCardObject;
+                        break;
+                    }
+                }
+                else
+                {
+                    if(targetCardObject == cardSlotObject.SlotObject)
+                    {
+                        if (targetCardObject.RowNumber == rowOfSlot)
+                        {
+                            targetCardObject.transform.position = cardSlotObject.SlotPosition;
+                            break;
+                        }
+                    }
+                }
+            }
         }
     }
 
-    private void CheckAndRemoveDeadSlot(ref List<CardSlot> targetCardSlotList, ref ObjectPoolManager poolMgr)
+    private void CheckAndEmptySlot(ref List<CardSlot> targetCardSlotList)
     {
         for (int i = 0; i < targetCardSlotList.Count; ++i)
         {
@@ -118,9 +148,32 @@ public class CardMovementWorker : MonoBehaviour
             {
                 if (playerCardSlot.SlotObject.CurrentHealthPoint <= 0)
                 {
-                    targetCardSlotList[i].SlotObject.ResetStatus();
-                    poolMgr.ReleaseObject(targetCardSlotList[i].SlotObject.gameObject);
                     targetCardSlotList[i].SlotObject = null;
+                }
+            }
+        }
+    }
+
+    private void ReArrangeOperation(ref List<CardSlot> targetCardSlotList)
+    {
+        for (int i = 0; i < targetCardSlotList.Count - 1; ++i)
+        {
+            int rowOfSlot = (i / 2) + 1;
+
+            CardSlot targetSlot = targetCardSlotList[i];
+            CardSlot nextTargetSlot = targetCardSlotList[i + 1];
+            if (targetSlot.SlotObject == null)
+            {
+                if (nextTargetSlot.SlotObject != null)
+                {
+                    if(rowOfSlot != nextTargetSlot.SlotObject.RowNumber)
+                    {
+                        nextTargetSlot.SlotObject.RowNumber = rowOfSlot;
+                    }
+
+                    // Todo : Add MovingAnimation To Destination Slot.
+                    nextTargetSlot.SlotObject.transform.position = targetSlot.SlotPosition;
+                    UtilityFunctions.Swap(ref targetSlot.SlotObject, ref nextTargetSlot.SlotObject);
                 }
             }
         }
