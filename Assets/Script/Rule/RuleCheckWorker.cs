@@ -3,12 +3,23 @@ using System.Collections;
 using System.Collections.Generic;
 using Constants;
 using CustomUtility;
+using System;
 
 // 승, 패 조건 체크(적, 아군 객체수로 판단)
 //
 public class RuleCheckWorker : MonoBehaviour
 {
+    public delegate void OccuredActionListener(OccuredActionState ActionEvent);
     public delegate void GameWinListener(GameRuleState GameState, bool IsPlayerWin);
+
+    public enum OccuredActionState
+    {
+        None,
+        Attack,
+        CardSpecialSkill,
+        SkillCard,
+    }
+
     public enum GameRuleState
     {
         WaitGame,
@@ -23,6 +34,7 @@ public class RuleCheckWorker : MonoBehaviour
 
     private CharacterCard m_CurrentTurnCard = null;
     private GameWinListener m_GameWinListener = null;
+    private OccuredActionListener m_ActionListener = null;
 
     private List<CharacterCard> m_EnemyCardList = null;
     private List<CharacterCard> m_PlayerCardList = null;
@@ -76,6 +88,11 @@ public class RuleCheckWorker : MonoBehaviour
         m_GameWinListener = gameListener;
     }
 
+    public void RegisterOccuredActionListener(OccuredActionListener actionListener)
+    {
+        m_ActionListener = actionListener;
+    }
+
     public IEnumerator Run()
     {
         if(m_CurrentGameState == GameRuleState.GamePlaying)
@@ -109,6 +126,7 @@ public class RuleCheckWorker : MonoBehaviour
 
     private void CardTurnAction()
     {
+        // Todo : 사정거리 범위에는 있으나, 그 슬롯이 비었을 경우를 생각하고 계산하기.
         // 기존의 자신과 팀을 제외하고 공격할 수 있는 적군의 행을 계산한다.
         int realAttackRange = -(m_CurrentTurnCard.RowNumber) + (m_CurrentTurnCard.m_AttackRange + 1);
         realAttackRange = (realAttackRange > ConstantDefine.THIRD_ROW) ? ConstantDefine.THIRD_ROW : realAttackRange;
@@ -135,6 +153,7 @@ public class RuleCheckWorker : MonoBehaviour
     // 사정거리 내에 있을 경우, 공격할 행을 알려준다.
     private int GetAttackConfirmedRow(int realAttackRange)
     {
+        // Todo : Object Check In Row(with Slot).
         int retRow = 0;
         if (realAttackRange > ConstantDefine.FIRST_ROW)
         {
@@ -203,6 +222,7 @@ public class RuleCheckWorker : MonoBehaviour
                         {
                             m_CurrentTurnCard.AttackCard(cardObject);
                             Debug.Log("Attacked Row = " + attackRow);
+                            m_ActionListener(OccuredActionState.Attack);
                             break;
                         }
                     }
@@ -215,7 +235,7 @@ public class RuleCheckWorker : MonoBehaviour
     {
         AdjustExecuteOrder();
 
-        if(m_CurrentTurnCard.IsActionEnded)
+        if (m_CurrentTurnCard.CurrentCardStatus == CharacterCard.CardStatus.TurnActionEnded)
         {
             if (m_CurrentCardIndex < m_TurnExecuteOrder.Count - 1)
             {
@@ -223,14 +243,19 @@ public class RuleCheckWorker : MonoBehaviour
             }
             else
             {
+                // 하나의 페이즈가 끝날 때마다, 턴에 관련된 모든 상태를 초기화한다.
+                // 추후, 디버프나, 버프 같은 상태이상의 지속시간 소비부분도 이 부분에서 결정한다.
+                for(int i = 0; i < m_TurnExecuteOrder.Count; ++i)
+                {
+                    m_TurnExecuteOrder[i].PhaseEndAction();
+                }
+
                 m_CurrentTurnCard = m_TurnExecuteOrder[0];
                 m_CurrentCardIndex = 0;
                 ++m_GamePhase;
 
                 Debug.Log("GamePhase = " + m_GamePhase);
             }
-
-            m_CurrentTurnCard.IsActionEnded = false;
         }
     }
 
