@@ -12,9 +12,9 @@ public class CardSlotWorker : MonoBehaviour
         public CharacterCard SlotObject;
     }
 
-    private Vector3[] m_PlayerCardStandardPosition = null;
-    private Vector3[] m_EnemyCardStandardPosition = null;
-    private Vector3[] m_EnemyCharacterStandardPosition = null;
+    private Vector3 m_PlayerCardSpawnStartPosition = new Vector3(0.0f, 0.0f, 0.0f);
+    private Vector3 m_EnemyCardSpawnStartPosition = new Vector3(0.0f, 0.0f, 0.0f);
+    private Vector3 m_EnemyCharacterSpawnStartPosition = new Vector3(0.0f, 0.0f, 0.0f);
 
     private List<CharacterCard> m_PlayerCardList = null;
     private List<CharacterCard> m_EnemyCardList = null;
@@ -22,23 +22,25 @@ public class CardSlotWorker : MonoBehaviour
     private List<CardSlot> m_PlayerCardSlotList = new List<CardSlot>();
     private List<CardSlot> m_EnemyCardSlotList = new List<CardSlot>();
 
-    public Vector3[] PlayerCardPosition
+    public Vector3 PlayerCardSpawnStartPosition
     {
-        set { m_PlayerCardStandardPosition = value; }
+        set { m_PlayerCardSpawnStartPosition = value; }
     }
-    public Vector3[] EnemyCardPosition
+
+    public Vector3 EnemyCardSpawnStartPosition
     {
-        set { m_EnemyCardStandardPosition = value; }
+        set { m_EnemyCardSpawnStartPosition = value; }
     }
-    public Vector3[] EnemyCharacterPosition
+
+    public Vector3 EnemyCharacterSpawnStartPosition
     {
-        set { m_EnemyCharacterStandardPosition = value; }
+        set { m_EnemyCharacterSpawnStartPosition = value; }
     }
 
     public void InitCardPositionSlots()
     {
-        InitCardSlotsInList(m_PlayerCardSlotList, m_PlayerCardStandardPosition, false);
-        InitCardSlotsInList(m_EnemyCardSlotList, m_EnemyCardStandardPosition, false);
+        InitCardSlotsInList(m_PlayerCardSlotList, m_PlayerCardSpawnStartPosition, false);
+        InitCardSlotsInList(m_EnemyCardSlotList, m_EnemyCardSpawnStartPosition, false);
     }
 
     public void AttachPlayerCardToSlot(ref List<CharacterCard> targetCardList)
@@ -53,26 +55,52 @@ public class CardSlotWorker : MonoBehaviour
         m_EnemyCardList = targetCardList;
     }
 
-    public int GetAttackableRowCountInRange(bool targetIsPlayerTeam, int realRange)
+    public int[] GetAttackableSlotIndex(bool targetIsPlayerTeam)
     {
-        int retAttackableRowCount = 0;
+        int[] retAttackableRowIndexArr = null;
 
         if(targetIsPlayerTeam)
         {
-            retAttackableRowCount = GetAttackableRowCountOperation(ref m_PlayerCardSlotList, realRange);
+            retAttackableRowIndexArr = GetAttackableSlotCountOperation(ref m_PlayerCardSlotList);
         }
         else
         {
-            retAttackableRowCount = GetAttackableRowCountOperation(ref m_EnemyCardSlotList, realRange);
+            retAttackableRowIndexArr = GetAttackableSlotCountOperation(ref m_EnemyCardSlotList);
         }
 
-        return retAttackableRowCount;
+        return retAttackableRowIndexArr;
     }
 
-    public void ReArrangeCardSlot()
+    public int[] GetNonDefensiveCardIndex(bool targetIsPlayerTeam)
     {
-        ReArrangeOperation(ref m_PlayerCardSlotList);
-        ReArrangeOperation(ref m_EnemyCardSlotList);
+        int[] retNonDefensiveCardIndexArr = null;
+
+        if (targetIsPlayerTeam)
+        {
+            retNonDefensiveCardIndexArr = GetNonDefensiveCardIndexOperation(ref m_PlayerCardSlotList, ref m_PlayerCardList);
+        }
+        else
+        {
+            retNonDefensiveCardIndexArr = GetNonDefensiveCardIndexOperation(ref m_EnemyCardSlotList, ref m_EnemyCardList);
+        }
+
+        return retNonDefensiveCardIndexArr;
+    }
+
+    public int[] GetDefensiveCardIndex(bool targetIsPlayerTeam)
+    {
+        int[] retDefensiveCardIndexArr = null;
+
+        if(targetIsPlayerTeam)
+        {
+            retDefensiveCardIndexArr = GetDefensiveCardIndexOperation(ref m_PlayerCardSlotList, ref m_PlayerCardList);
+        }
+        else
+        {
+            retDefensiveCardIndexArr = GetDefensiveCardIndexOperation(ref m_EnemyCardSlotList, ref m_EnemyCardList);
+        }
+
+        return retDefensiveCardIndexArr;
     }
 
     public IEnumerator Run()
@@ -83,31 +111,20 @@ public class CardSlotWorker : MonoBehaviour
         yield return null;
     }
 
-    private void InitCardSlotsInList(List<CardSlot> targetSlotList, Vector3[] standardPosition, bool isCharacterSlot)
+    private void InitCardSlotsInList(List<CardSlot> targetSlotList, Vector3 standardPosition, bool isCharacterSlot)
     {
-        bool onLeftSlotCreate = true;
         float distToStandardPosition = (isCharacterSlot == false) ? ConstantDefine.DISTANCE_FROM_STANDARD_POSITION_CARD :
                                             ConstantDefine.DISTANCE_FROM_STANDARD_POSITION_CHARACTER;
+
         for (int i = 0; i < ConstantDefine.MAX_CARD_DECK_COUNT; ++i)
         {
             CardSlot createdCardSlot = new CardSlot();
 
-            Vector3 standardTemp = standardPosition[i / 2];
-            Vector3 realPosition = new Vector3(0.0f, 0.0f, 0.0f);
-            if (onLeftSlotCreate)
-            {
-                realPosition = new Vector3(standardTemp.x - distToStandardPosition, standardTemp.y, standardTemp.z);
-            }
-            else
-            {
-                realPosition = new Vector3(standardTemp.x + distToStandardPosition, standardTemp.y, standardTemp.z);
-            }
+            Vector3 realPosition = new Vector3(standardPosition.x + (distToStandardPosition * i), standardPosition.y, standardPosition.z);
             createdCardSlot.SlotPosition = realPosition;
             createdCardSlot.SlotObject = null;
 
             targetSlotList.Add(createdCardSlot);
-
-            onLeftSlotCreate = !onLeftSlotCreate;
         }
     }
 
@@ -120,24 +137,18 @@ public class CardSlotWorker : MonoBehaviour
             {
                 int rowOfSlot = (j / 2) + 1;
                 CardSlot cardSlotObject = cardSlotList[j];
-                if(cardSlotObject.SlotObject == null)
+                if (cardSlotObject.SlotObject == null)
                 {
-                    if (targetCardObject.RowNumber == rowOfSlot)
-                    {
-                        targetCardObject.transform.position = cardSlotObject.SlotPosition;
-                        cardSlotObject.SlotObject = targetCardObject;
-                        break;
-                    }
+                    targetCardObject.transform.position = cardSlotObject.SlotPosition;
+                    cardSlotObject.SlotObject = targetCardObject;
+                    break;
                 }
                 else
                 {
-                    if(targetCardObject == cardSlotObject.SlotObject)
+                    if (targetCardObject == cardSlotObject.SlotObject)
                     {
-                        if (targetCardObject.RowNumber == rowOfSlot)
-                        {
-                            targetCardObject.transform.position = cardSlotObject.SlotPosition;
-                            break;
-                        }
+                        targetCardObject.transform.position = cardSlotObject.SlotPosition;
+                        break;
                     }
                 }
             }
@@ -160,55 +171,63 @@ public class CardSlotWorker : MonoBehaviour
         }
     }
 
-    private void ReArrangeOperation(ref List<CardSlot> targetCardSlotList)
+    private int[] GetAttackableSlotCountOperation(ref List<CardSlot> targetList)
     {
-        for (int i = 0; i < targetCardSlotList.Count - 1; ++i)
-        {
-            int rowOfSlot = (i / 2) + 1;
-
-            CardSlot targetSlot = targetCardSlotList[i];
-            CardSlot nextTargetSlot = targetCardSlotList[i + 1];
-            if (targetSlot.SlotObject == null)
-            {
-                if (nextTargetSlot.SlotObject != null)
-                {
-                    if(rowOfSlot != nextTargetSlot.SlotObject.RowNumber)
-                    {
-                        nextTargetSlot.SlotObject.RowNumber = rowOfSlot;
-                    }
-
-                    UtilityFunctions.Swap(ref targetSlot.SlotObject, ref nextTargetSlot.SlotObject);
-                }
-            }
-        }
-    }
-
-    private int GetAttackableRowCountOperation(ref List<CardSlot> targetList, int realRange)
-    {
-        int retAttackableRowCount = 0;
-        int prevRowIndex = 0;
+        List<int> retAttackableRowIndexArr = new List<int>();
 
         for (int i = 0; i < targetList.Count; ++i)
         {
-            int rowIndex = (i / 2) + 1;
-            CardSlot playerSlot = targetList[i];
-            if (playerSlot.SlotObject != null)
+            CardSlot targetSlot = targetList[i];
+            if (targetSlot.SlotObject != null)
             {
-                if (playerSlot.SlotObject.RowNumber <= realRange)
+                if(targetSlot.SlotObject.m_HealthPoint > 0)
                 {
-                    if (prevRowIndex != rowIndex)
-                    {
-                        prevRowIndex = rowIndex;
-                        ++retAttackableRowCount;
-                    }
+                    retAttackableRowIndexArr.Add(i);
                 }
-            }
-            else
-            {
-                break;
             }
         }
 
-        return retAttackableRowCount;
+        return retAttackableRowIndexArr.ToArray();
+    }
+
+    private int[] GetNonDefensiveCardIndexOperation(ref List<CardSlot> targetSlotList, ref List<CharacterCard> targetSideCardList)
+    {
+        List<int> retCardIndexArr = new List<int>();
+
+        for (int i = 0; i < targetSlotList.Count; ++i)
+        {
+            CardSlot cardSlot = targetSlotList[i];
+            if(cardSlot.SlotObject != null)
+            {
+                if (!cardSlot.SlotObject.IsDefensiveCard)
+                {
+                    int realNonDefensiveIndex = targetSideCardList.IndexOf(cardSlot.SlotObject);
+                    retCardIndexArr.Add(realNonDefensiveIndex);
+                }
+            }
+        }
+
+        return retCardIndexArr.ToArray();
+    }
+
+    private int[] GetDefensiveCardIndexOperation(ref List<CardSlot> targetSlotList, ref List<CharacterCard> targetSideCardList)
+    {
+        List<int> retCardIndexArr = new List<int>();
+
+        for(int i = 0; i < targetSlotList.Count; ++i)
+        {
+            CardSlot cardSlot = targetSlotList[i];
+
+            if(cardSlot.SlotObject != null)
+            {
+                if (cardSlot.SlotObject.IsDefensiveCard)
+                {
+                    int realNonDefensiveIndex = targetSideCardList.IndexOf(cardSlot.SlotObject);
+                    retCardIndexArr.Add(realNonDefensiveIndex);
+                }
+            }
+        }
+
+        return retCardIndexArr.ToArray();
     }
 }

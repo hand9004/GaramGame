@@ -11,7 +11,7 @@ public class RuleCheckWorker : MonoBehaviour
 {
     // Connector의 경우, 어떤 모듈과 어떤 모듈이 연결되서 사용되는 delegate 변수에 붙이는 접미사
     // Listener의 경우, 어떤 클래스가 특정 모듈로부터 어떤 상황에 따른 이벤트를 얻기만 할 경우 붙이는 접미사
-    public delegate int AttackableRowCountConnector(bool targetIsPlayerTeam, int realRange);
+    public delegate int GetAttackSlotIndexConnector(bool targetIsPlayerTeam);
 
     public delegate void OccuredActionListener(OccuredActionState ActionEvent);
     public delegate void GameWinListener(GameRuleState GameState, bool IsPlayerWin);
@@ -38,7 +38,7 @@ public class RuleCheckWorker : MonoBehaviour
 
     private CharacterCard m_CurrentTurnCard = null;
 
-    private AttackableRowCountConnector m_AttackableConnector = null;
+    private GetAttackSlotIndexConnector m_GetAttackSlotIndexConnector = null;
     private GameWinListener m_GameWinListener = null;
     private OccuredActionListener m_ActionListener = null;
 
@@ -89,9 +89,9 @@ public class RuleCheckWorker : MonoBehaviour
         m_CurrentGameState = GameRuleState.GamePlaying;
     }
 
-    public void RegisterAttackableRowCountConnector(AttackableRowCountConnector attackableConnector)
+    public void RegisterGetAttackSlotIndexConnector(GetAttackSlotIndexConnector attackableConnector)
     {
-        m_AttackableConnector = attackableConnector;
+        m_GetAttackSlotIndexConnector = attackableConnector;
     }
 
     public void RegisterGameWinListener(GameWinListener gameListener)
@@ -137,114 +137,51 @@ public class RuleCheckWorker : MonoBehaviour
 
     private void CardTurnAction()
     {
-        // Todo : 사정거리 범위에는 있으나, 그 슬롯이 비었을 경우를 생각하고 계산하기.
-        // 기존의 자신과 팀을 제외하고 공격할 수 있는 적군의 행을 계산한다.
-        int realAttackRange = -(m_CurrentTurnCard.RowNumber) + (m_CurrentTurnCard.m_AttackRange + 1);
-        realAttackRange = (realAttackRange > ConstantDefine.THIRD_ROW) ? ConstantDefine.THIRD_ROW : realAttackRange;
-
-        int attackableCount = m_AttackableConnector(!m_CurrentTurnCard.IsPlayerTeam, realAttackRange);
-        int selectedRow = GetAttackConfirmedRow(attackableCount);
-
-        if (m_CurrentTurnCard.IsPlayerTeam)
+        if(m_CurrentTurnCard != null)
         {
-            if (selectedRow > 0)
+            int selectedSlot = m_GetAttackSlotIndexConnector(!m_CurrentTurnCard.IsPlayerTeam);
+
+            if (m_CurrentTurnCard.IsPlayerTeam)
             {
-                AttackCardOnRow(m_EnemyCardList, selectedRow);
+                if (selectedSlot >= 0)
+                {
+                    AttackCardOnSlot(m_EnemyCardList, selectedSlot);
+                }
+                else
+                {
+                    m_CurrentTurnCard.OnCardDoNothing();
+                }
             }
             else
             {
-                m_CurrentTurnCard.OnCardDoNoting();
-            }
-        }
-        else
-        {
-            if (selectedRow > 0)
-            {
-                AttackCardOnRow(m_PlayerCardList, selectedRow);
-            }
-            else
-            {
-                m_CurrentTurnCard.OnCardDoNoting();
+                if (selectedSlot >= 0)
+                {
+                    AttackCardOnSlot(m_PlayerCardList, selectedSlot);
+                }
+                else
+                {
+                    m_CurrentTurnCard.OnCardDoNothing();
+                }
             }
         }
 
         GoingToNextTurn();
     }
 
-    // 사정거리 내에 있을 경우, 공격할 행을 알려준다.
-    private int GetAttackConfirmedRow(int attackableCount)
+    private void AttackCardOnSlot(List<CharacterCard> targetList, int attackSlot)
     {
-        int retRow = 0;
-        if (attackableCount > ConstantDefine.FIRST_ROW)
+        if (m_CurrentTurnCard.CurrentCardStatus == CharacterCard.CardStatus.Idle)
         {
-            switch (attackableCount)
+            CharacterCard cardObject = targetList[attackSlot];
+            if(cardObject != null)
             {
-                case ConstantDefine.SECOND_ROW:
-                    {
-                        float[] percentageDistribute = { 0.6f, 0.4f };
-                        int selectedIndex = UtilityFunctions.GetWhereIsCorrect(0, 100, percentageDistribute);
-                        if (selectedIndex == 0)
-                        {
-                            retRow = ConstantDefine.FIRST_ROW;
-                        }
-                        else
-                        {
-                            retRow = ConstantDefine.SECOND_ROW;
-                        }
-                    }
-                    break;
-                case ConstantDefine.THIRD_ROW:
-                    {
-                        float[] percentageDistribute = { 0.5f, 0.35f, 0.15f };
-                        int selectedIndex = UtilityFunctions.GetWhereIsCorrect(0, 100, percentageDistribute);
-
-                        if (selectedIndex == 0)
-                        {
-                            retRow = ConstantDefine.FIRST_ROW;
-                        }
-                        else if(selectedIndex == 1)
-                        {
-                            retRow = ConstantDefine.SECOND_ROW;
-                        }
-                        else
-                        {
-                            retRow = ConstantDefine.THIRD_ROW;
-                        }
-                    }
-                    break;
-                default:
-                    {
-                        Debug.Assert(false);
-                    }
-                    break;
-            }
-        }
-        else if (attackableCount == ConstantDefine.FIRST_ROW)
-        {
-            retRow = ConstantDefine.FIRST_ROW;
-        }
-
-        return retRow;
-    }
-
-    private void AttackCardOnRow(List<CharacterCard> targetList, int attackRow)
-    {
-        if(m_CurrentTurnCard.CurrentCardStatus == CharacterCard.CardStatus.Idle)
-        {
-            for (int i = 0; i < targetList.Count; ++i)
-            {
-                CharacterCard cardObject = targetList[i];
-                if (cardObject.RowNumber == attackRow)
+                if (cardObject.isActiveAndEnabled && m_CurrentTurnCard.isActiveAndEnabled)
                 {
-                    if (cardObject.isActiveAndEnabled && m_CurrentTurnCard.isActiveAndEnabled)
+                    if (cardObject.CurrentHealthPoint > 0)
                     {
-                        if (cardObject.CurrentHealthPoint > 0)
-                        {
-                            m_CurrentTurnCard.AttackCard(cardObject);
-                            Debug.Log("Attacked Row = " + attackRow);
-                            m_ActionListener(OccuredActionState.Attack);
-                            break;
-                        }
+                        m_CurrentTurnCard.AttackCard(cardObject);
+                        Debug.Log("Attacked Slot = " + attackSlot);
+                        m_ActionListener(OccuredActionState.Attack);
                     }
                 }
             }

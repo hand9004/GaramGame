@@ -1,6 +1,7 @@
 ﻿using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
+using CustomUtility;
 using Constants;
 
 public class RuleAdministrator : MonoBehaviour
@@ -8,21 +9,13 @@ public class RuleAdministrator : MonoBehaviour
     [System.Serializable]
     public struct CardDeckSettingData
     {
-        public int RowNumber;
+        public bool IsDefensiveCard;
         public GameObject CardPrefab;
     };
 
-    public Transform m_FirstPlayerRowMidPosition = null;
-    public Transform m_SecondPlayerRowMidPosition = null;
-    public Transform m_ThirdPlayerRowMidPosition = null;
-
-    public Transform m_FirstEnemyRowMidPosition = null;
-    public Transform m_SecondEnemyRowMidPosition = null;
-    public Transform m_ThirdEnemyRowMidPosition = null;
-
-    public Transform m_FirstEnemyCharacterRowMidPosition = null;
-    public Transform m_SecondEnemyCharacterRowMidPosition = null;
-    public Transform m_ThirdEnemyCharacterRowMidPosition = null;
+    public Transform m_PlayerCardSpawnStartPosition = null;
+    public Transform m_EnemyCardSpawnStartPosition = null;
+    public Transform m_EnemyCharacterSpawnStartPosition = null;
 
     public List<CardDeckSettingData> m_PlayerSideCardSettingList = new List<CardDeckSettingData>();
     public List<CardDeckSettingData> m_EnemySideCardSettingList = new List<CardDeckSettingData>();
@@ -34,6 +27,7 @@ public class RuleAdministrator : MonoBehaviour
     private CardSlotWorker m_CardSlotWorker = null;
     private RuleCheckWorker m_RuleCheckWorker = null;
     private SkillCardWorker m_SkillCardWorker = null;
+    private UIControlWorker m_UIControlWorker = null;
 
     private bool isGameFinished = false;
 
@@ -46,10 +40,11 @@ public class RuleAdministrator : MonoBehaviour
         m_CardSlotWorker = gameObject.AddComponent<CardSlotWorker>();
         m_RuleCheckWorker = gameObject.AddComponent<RuleCheckWorker>();
         m_SkillCardWorker = gameObject.AddComponent<SkillCardWorker>();
+        m_UIControlWorker = gameObject.AddComponent<UIControlWorker>();
 
         InitCards();
 
-        InitCardMovementWorker();
+        InitCardSlotWorker();
         InitRuleCheckWorker();
         InitCardStatusCheckWorker();
     }
@@ -91,11 +86,11 @@ public class RuleAdministrator : MonoBehaviour
             inGamePortraitSpr.sprite = settingPortraitSpr.sprite;
 
             inGameCardObject.IsPlayerTeam = isPlayerTeam;
-            inGameCardObject.RowNumber = settingDataList[i].RowNumber;
             inGameCardObject.m_HealthPoint = settingCardPrefab.m_HealthPoint;
-            inGameCardObject.m_AttackPoint = settingCardPrefab.m_AttackPoint;
+            inGameCardObject.m_AttackPoint = (settingDataList[i].IsDefensiveCard) ? (int)(settingCardPrefab.m_AttackPoint * 0.5f)
+                                                                    : settingCardPrefab.m_AttackPoint;
             inGameCardObject.m_Speed = settingCardPrefab.m_Speed;
-            inGameCardObject.m_AttackRange = settingCardPrefab.m_AttackRange;
+            inGameCardObject.IsDefensiveCard = settingDataList[i].IsDefensiveCard;
             inGameCardObject.ResetStatus();
 
             StartCoroutine(inGameCardObject.UpdateCardStatus());
@@ -104,23 +99,11 @@ public class RuleAdministrator : MonoBehaviour
         }
     }
 
-    private void InitCardMovementWorker()
+    private void InitCardSlotWorker()
     {
-        Vector3[] playerCardPos = { m_FirstPlayerRowMidPosition.transform.position,
-            m_SecondPlayerRowMidPosition.transform.position,
-            m_ThirdPlayerRowMidPosition.transform.position };
-
-        Vector3[] EnemyCardPos = { m_FirstEnemyRowMidPosition.transform.position,
-            m_SecondEnemyRowMidPosition.transform.position,
-            m_ThirdEnemyRowMidPosition.transform.position };
-
-        Vector3[] EnemyCharacterPos = { m_FirstEnemyCharacterRowMidPosition.transform.position,
-            m_SecondEnemyCharacterRowMidPosition.transform.position,
-            m_ThirdEnemyCharacterRowMidPosition.transform.position };
-
-        m_CardSlotWorker.PlayerCardPosition = playerCardPos;
-        m_CardSlotWorker.EnemyCardPosition = EnemyCardPos;
-        m_CardSlotWorker.EnemyCharacterPosition = EnemyCharacterPos;
+        m_CardSlotWorker.PlayerCardSpawnStartPosition = m_PlayerCardSpawnStartPosition.position;
+        m_CardSlotWorker.EnemyCardSpawnStartPosition = m_EnemyCardSpawnStartPosition.position;
+        m_CardSlotWorker.EnemyCharacterSpawnStartPosition = m_EnemyCharacterSpawnStartPosition.position;
 
         m_CardSlotWorker.InitCardPositionSlots();
 
@@ -131,9 +114,52 @@ public class RuleAdministrator : MonoBehaviour
     private void InitRuleCheckWorker()
     {
         m_RuleCheckWorker.InitRuleCheckWorker(ref m_PlayerCardCharacterList, ref m_EnemyCardCharacterList);
-        m_RuleCheckWorker.RegisterAttackableRowCountConnector((bool targetIsPlayerTeam, int realAttackRange) =>
+        m_RuleCheckWorker.RegisterGetAttackSlotIndexConnector((bool targetIsPlayerTeam) =>
         {
-            return m_CardSlotWorker.GetAttackableRowCountInRange(targetIsPlayerTeam, realAttackRange);
+            int attackSlot = -1;
+            int[] nonDefensiveSlotIndexArr = m_CardSlotWorker.GetNonDefensiveCardIndex(targetIsPlayerTeam);
+            int[] defensiveSlotIndexArr = m_CardSlotWorker.GetDefensiveCardIndex(targetIsPlayerTeam);
+
+            if(defensiveSlotIndexArr.Length > 0)
+            {
+                if(nonDefensiveSlotIndexArr.Length > 0)
+                {
+                    float[] defensiveAttackDistribution = { 0.7f, 0.3f };
+                    int defensiveAttackIndex = UtilityFunctions.GetWhereIsCorrect(0.0f, 1.0f, defensiveAttackDistribution);
+                    switch (defensiveAttackIndex)
+                    {
+                        case 0:
+                            {
+                                int selectedIndex = UtilityFunctions.GetWhereIsCorrect(0.0f, 1.0f, defensiveSlotIndexArr.Length);
+                                attackSlot = defensiveSlotIndexArr[selectedIndex];
+                            }
+                            break;
+                        case 1:
+                            {
+                                int selectedIndex = UtilityFunctions.GetWhereIsCorrect(0.0f, 1.0f, nonDefensiveSlotIndexArr.Length);
+                                attackSlot = nonDefensiveSlotIndexArr[selectedIndex];
+                            }
+                            break;
+                        default:
+                            {
+                                Debug.Assert(false, "This Can't be Happened.");
+                            }
+                            break;
+                    }
+                }
+                else
+                {
+                    int selectedIndex = UtilityFunctions.GetWhereIsCorrect(0.0f, 1.0f, defensiveSlotIndexArr.Length);
+                    attackSlot = defensiveSlotIndexArr[selectedIndex];
+                }
+            }
+            else if(nonDefensiveSlotIndexArr.Length > 0)
+            {
+                int selectedIndex = UtilityFunctions.GetWhereIsCorrect(0.0f, 1.0f, nonDefensiveSlotIndexArr.Length);
+                attackSlot = nonDefensiveSlotIndexArr[selectedIndex];
+            }
+
+            return attackSlot;
         });
         m_RuleCheckWorker.RegisterGameWinListener(
             (RuleCheckWorker.GameRuleState GameState, bool IsPlayerWin) =>
@@ -179,7 +205,6 @@ public class RuleAdministrator : MonoBehaviour
         m_CardStatusCheckWorker.InitCardStatusCheckWorker(ref m_PlayerCardCharacterList, ref m_EnemyCardCharacterList);
         m_CardStatusCheckWorker.RegisterDiedCardObjectListener(() =>
         {
-            m_CardSlotWorker.ReArrangeCardSlot();
         });
     }
 }
