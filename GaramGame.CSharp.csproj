@@ -74,6 +74,7 @@
     <Compile Include="Assets\Script\Rule\RuleAdministrator.cs" />
     <Compile Include="Assets\Script\Rule\RuleCheckWorker.cs" />
     <Compile Include="Assets\Script\Rule\SkillCardWorker.cs" />
+    <Compile Include="Assets\Script\Rule\UIControlWorker.cs" />
     <Compile Include="Assets\Script\Utilities\ConstantDefine.cs" />
     <Compile Include="Assets\Script\Utilities\CustomUtility.cs" />
   </ItemGroup>
