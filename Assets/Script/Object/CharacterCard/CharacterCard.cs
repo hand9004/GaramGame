@@ -9,7 +9,6 @@ public class CharacterCard : MonoBehaviour {
         TurnActionEnded,
     }
 
-    public int m_AttackRange = 0;
     public int m_HealthPoint = 0;
     public int m_AttackPoint = 0;
     public int m_Speed = 0;
@@ -21,7 +20,7 @@ public class CharacterCard : MonoBehaviour {
     public TextMesh m_SpeedText = null;
 
     private bool m_IsPlayerTeam = false;
-    private int m_PlacedRowNumber = 0;
+    private bool m_IsDefensiveCard = false;
     private CardVisualizer m_CharacterCardVisualizer = null;
     private CharacterCard m_TargetCard = null;
     private CardStatus m_CardStatus = CardStatus.Idle;
@@ -32,18 +31,10 @@ public class CharacterCard : MonoBehaviour {
         set { m_IsPlayerTeam = value; }
     }
 
-    public int RowNumber
+    public bool IsDefensiveCard
     {
-        get
-        {
-            Debug.Assert(m_PlacedRowNumber > 0 && m_PlacedRowNumber <= 3, "RowNumber Should be Set. Range is 1 ~ 3.");
-            return m_PlacedRowNumber;
-        }
-        set
-        {
-            Debug.Assert(value > 0 && value <= 3, "RowNumber Value Should be 1 ~ 3.");
-            m_PlacedRowNumber = value;
-        }
+        get { return m_IsDefensiveCard; }
+        set { m_IsDefensiveCard = value; }
     }
 
     public CardStatus CurrentCardStatus
@@ -59,7 +50,6 @@ public class CharacterCard : MonoBehaviour {
 
     public CharacterCard(ref CharacterCard sourceObject)
     {
-        this.m_AttackRange = sourceObject.m_AttackRange;
         this.m_HealthPoint = sourceObject.m_HealthPoint;
         this.m_AttackPoint = sourceObject.m_AttackPoint;
         this.m_Speed = sourceObject.m_Speed;
@@ -70,7 +60,6 @@ public class CharacterCard : MonoBehaviour {
         this.m_SpeedText = sourceObject.m_SpeedText;
 
         this.m_IsPlayerTeam = sourceObject.m_IsPlayerTeam;
-        this.m_PlacedRowNumber = sourceObject.m_PlacedRowNumber;
     }
 
     void Awake()
@@ -86,6 +75,7 @@ public class CharacterCard : MonoBehaviour {
                         {
                             if(m_TargetCard.isActiveAndEnabled)
                             {
+                                m_TargetCard.OnCardAttacked();
                                 m_TargetCard.CurrentHealthPoint -= m_AttackPoint;
                                 m_TargetCard.StartCoroutine(m_TargetCard.UpdateCardStatus());
                                 m_TargetCard = null;
@@ -122,7 +112,6 @@ public class CharacterCard : MonoBehaviour {
     public void AttackCard(CharacterCard targetCard)
     {
         this.OnCardAttacking();
-        targetCard.OnCardAttacked();
         m_TargetCard = targetCard;
     }
 
@@ -135,7 +124,7 @@ public class CharacterCard : MonoBehaviour {
         yield return null;
     }
 
-    public void OnCardDoNoting()
+    public void OnCardDoNothing()
     {
         m_CardStatus = CardStatus.TurnActionEnded;
     }

@@ -67,7 +67,7 @@ public class CardVisualizer : MonoBehaviour
         m_VisualizeEffect = new CardHitEffect();
 
         CardVisualizeEffect.VisualizeEffectData HitEffectData = new CardVisualizeEffect.VisualizeEffectData();
-        HitEffectData.m_DistanceToSource = 0.1f;
+        HitEffectData.m_DistanceToSource = 0.3f;
         HitEffectData.m_VibrationCount = 4;
 
         m_VisualizeEffect.InitVisualizeEffect(gameObject, ref HitEffectData);
