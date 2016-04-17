@@ -52,16 +52,17 @@ public class CharacterCard : MonoBehaviour {
 
     public CharacterCard(ref CharacterCard sourceObject)
     {
-        this.m_HealthPoint = sourceObject.m_HealthPoint;
-        this.m_AttackPoint = sourceObject.m_AttackPoint;
-        this.m_Speed = sourceObject.m_Speed;
+        m_HealthPoint = sourceObject.m_HealthPoint;
+        m_AttackPoint = sourceObject.m_AttackPoint;
+        m_Speed = sourceObject.m_Speed;
 
-        this.m_PortraitRenderer = sourceObject.m_PortraitRenderer;
-        this.m_HealthPointText = sourceObject.m_HealthPointText;
-        this.m_AttackPointText = sourceObject.m_AttackPointText;
-        this.m_SpeedText = sourceObject.m_SpeedText;
+        m_PortraitRenderer = sourceObject.m_PortraitRenderer;
+        m_BackgroundRenderer = sourceObject.m_BackgroundRenderer;
+        m_HealthPointText = sourceObject.m_HealthPointText;
+        m_AttackPointText = sourceObject.m_AttackPointText;
+        m_SpeedText = sourceObject.m_SpeedText;
 
-        this.m_IsPlayerTeam = sourceObject.m_IsPlayerTeam;
+        m_IsPlayerTeam = sourceObject.m_IsPlayerTeam;
     }
 
     void Awake()
