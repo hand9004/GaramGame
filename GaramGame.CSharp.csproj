@@ -63,20 +63,22 @@
     </Reference>
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCard.cs" />
-    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardAttackEffect.cs" />
-    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardHitEffect.cs" />
-    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardVisualizeEffect.cs" />
-    <Compile Include="Assets\Script\Object\CharacterCard\CharacterCardAdapter\CardVisualizer.cs" />
-    <Compile Include="Assets\Script\Object\ObjectPoolManager.cs" />
-    <Compile Include="Assets\Script\Rule\CardSlotWorker.cs" />
-    <Compile Include="Assets\Script\Rule\CardStatusCheckWorker.cs" />
-    <Compile Include="Assets\Script\Rule\RuleAdministrator.cs" />
-    <Compile Include="Assets\Script\Rule\RuleCheckWorker.cs" />
-    <Compile Include="Assets\Script\Rule\SkillCardWorker.cs" />
-    <Compile Include="Assets\Script\Rule\UIControlWorker.cs" />
-    <Compile Include="Assets\Script\Utilities\ConstantDefine.cs" />
-    <Compile Include="Assets\Script\Utilities\CustomUtility.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCard.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCardAdapter\CardAttackEffect.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCardAdapter\CardGlowingEffect.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCardAdapter\CardHitEffect.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCardAdapter\CardVisualizeEffect.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCardAdapter\CardVisualizeEffectData.cs" />
+    <Compile Include="Assets\Scripts\Object\CharacterCard\CharacterCardAdapter\CardVisualizer.cs" />
+    <Compile Include="Assets\Scripts\Object\ObjectPoolManager.cs" />
+    <Compile Include="Assets\Scripts\Rule\CardSlotWorker.cs" />
+    <Compile Include="Assets\Scripts\Rule\CardStatusCheckWorker.cs" />
+    <Compile Include="Assets\Scripts\Rule\RuleAdministrator.cs" />
+    <Compile Include="Assets\Scripts\Rule\RuleCheckWorker.cs" />
+    <Compile Include="Assets\Scripts\Rule\SkillCardWorker.cs" />
+    <Compile Include="Assets\Scripts\Rule\UIControlWorker.cs" />
+    <Compile Include="Assets\Scripts\Utilities\ConstantDefine.cs" />
+    <Compile Include="Assets\Scripts\Utilities\CustomUtility.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath)\SyntaxTree\UnityVS\2015\UnityVS.CSharp.targets" />
 </Project>
